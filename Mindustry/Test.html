@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Mindustry Clone</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #menu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1;
+        }
+
+        #menu button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        #researchTree {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            background-color: #444;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #researchTree ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #researchTree li {
+            margin: 5px 0;
+        }
+
+        #gameArea {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="menu">
+        <button data-type="mine">Mine</button>
+        <button data-type="turret">Turret</button>
+    </div>
+    <div id="researchTree">
+        <h3>Research Tree</h3>
+        <ul>
+            <li>
+                <button data-research="advancedMine">Advanced Mine</button>
+            </li>
+            <li>
+                <button data-research="laserTurret">Laser Turret</button>
+            </li>
+        </ul>
+    </div>
+    <div id="gameArea"></div>
+    <script>
+        let scene, camera, renderer, controls;
+        let robot, selectedBuilding = null;
+        const buildings = [];
+        const map = [];
+        const cellSize = 40;
+        const mapRows = 15;
+        const mapCols = 20;
+
+        const research = {
+            advancedMine: { unlocked: false, cost: 100 },
+            laserTurret: { unlocked: false, cost: 200 }
+        };
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x888888);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(300, 300, 300);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('gameArea').appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.set(mapCols * cellSize / 2, 0, mapRows * cellSize / 2);
+            controls.update();
+
+            // Map generation
+            for (let row = 0; row < mapRows; row++) {
+                const rowArray = [];
+                for (let col = 0; col < mapCols; col++) {
+                    const cellType = Math.random() < 0.2 ? 'resource' : 'empty';
+                    const cell = {
+                        type: cellType,
+                        resourceAmount: cellType === 'resource' ? Math.floor(Math.random() * 100) : 0,
+                        mesh: createCellMesh(cellType)
+                    };
+                    cell.mesh.position.set(col * cellSize, 0, row * cellSize);
+                    scene.add(cell.mesh);
+                    rowArray.push(cell);
+                }
+                map.push(rowArray);
+            }
+
+            // Robot creation
+            robot = createRobot();
+            robot.position.set(0, cellSize / 2, 0);
+            scene.add(robot);
+
+            // Controls
+            document.addEventListener('keydown', onDocumentKeyDown);
+            document.addEventListener('click', onDocumentClick);
+
+            document.getElementById('menu').addEventListener('click', (event) => {
+                if (event.target.tagName === 'BUTTON') {
+                    selectedBuilding = event.target.getAttribute('data-type');
+                }
+            });
+
+            document.getElementById('researchTree').addEventListener('click', (event) => {
+                if (event.target.tagName === 'BUTTON') {
+                    const researchType = event.target.getAttribute('data-research');
+                    unlockResearch(researchType);
+                }
+            });
+
+            // Render loop
+            animate();
+        }
+
+        function createCellMesh(type) {
+            const geometry = new THREE.PlaneGeometry(cellSize, cellSize);
+            let material;
+            if (type === 'resource') {
+                material = new THREE.MeshBasicMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
+            } else {
+                material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+            }
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.rotation.x = -Math.PI / 2;
+            return mesh;
+        }
+
+        function createRobot() {
+            const group = new THREE.Group();
+
+            const bodyGeometry = new THREE.CylinderGeometry(cellSize / 2, cellSize / 2, cellSize, 32);
+            const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.rotation.x = Math.PI / 2;
+            group.add(body);
+
+            const headGeometry = new THREE.SphereGeometry(cellSize / 4, 32, 32);
+            const headMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.set(0, cellSize / 2, 0);
+            group.add(head);
+
+            return group;
+        }
+
+        function onDocumentKeyDown(event) {
+            const keyCode = event.key;
+            let dx = 0, dz = 0;
+            if (keyCode === 'ArrowUp') dz = -cellSize;
+            if (keyCode === 'ArrowDown') dz = cellSize;
+            if (keyCode === 'ArrowLeft') dx = -cellSize;
+            if (keyCode === 'ArrowRight') dx = cellSize;
+
+            moveRobot(dx, dz);
+        }
+
+        function moveRobot(dx, dz) {
+            const newX = robot.position.x + dx;
+            const newZ = robot.position.z + dz;
+
+            if (newX >= 0 && newX < mapCols * cellSize && newZ >= 0 && newZ < mapRows * cellSize) {
+                robot.position.x = newX;
+                robot.position.z = newZ;
+
+                const col = Math.floor(robot.position.x / cellSize);
+                const row = Math.floor(robot.position.z / cellSize);
+                const cell = map[row][col];
+
+                if (cell.type === 'resource' && cell.resourceAmount > 0) {
+                    cell.resourceAmount -= 1;
+                    if (cell.resourceAmount === 0) {
+                        cell.type = 'empty';
+                        cell.mesh.material.color.set(0x00ff00);
+                    }
+                }
+            }
+        }
+
+        function onDocumentClick(event) {
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const x = Math.floor(intersect.point.x / cellSize);
+                const z = Math.floor(intersect.point.z / cellSize);
+
+                const cell = map[z][x];
+                if (cell.type === 'empty' && selectedBuilding) {
+                    cell.type = selectedBuilding;
+                    cell.mesh.material.color.set(selectedBuilding === 'mine' ? 0xffd700 : 0x8b0000);
+                    buildings.push({ type: selectedBuilding, position: { x, z } });
+                }
+            }
+        }
+
+        function unlockResearch(type) {
+            if (research[type]) {
+                research[type].unlocked = true;
+                document.querySelector(`button[data-research=${type}]`).disabled = true;
+                console.log(`${type} research unlocked`);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
