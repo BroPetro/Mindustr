@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Coding Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f9f9f9;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        #block-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .block {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: grab;
+            user-select: none;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        .block:hover {
+            background-color: #e0e0e0;
+        }
+
+        #code-area {
+            width: 90%;
+            height: 300px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #fff;
+            overflow-y: auto;
+        }
+
+        .dropped-block {
+            margin: 5px 0;
+            cursor: default;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>Block Coding Interface</header>
+    <div id="block-container">
+        <div class="block" draggable="true" id="Block-Code-Bax">Bax (Вибух)</div>
+        <div class="block" draggable="true" id="Block-Code-Else">Else (Інакше)</div>
+        <div class="block" draggable="true" id="Block-Code-If">If (Якщо то)</div>
+        <div class="block" draggable="true" id="Block-Code-Indicate">Indicate (Наводитися)</div>
+        <div class="block" draggable="true" id="Block-Code-OnClick">OnClick (Коли натиснуто)</div>
+        <div class="block" draggable="true" id="Block-Code-OnTouch">OnTouch (Коли торкається)</div>
+        <div class="block" draggable="true" id="Block-Code-PepleOnServer">PepleOnServer (Люди на сервері)</div>
+        <div class="block" draggable="true" id="Block-Code-Rotate">Rotate (поворот)</div>
+        <div class="block" draggable="true" id="Block-Code-Shoot">Shoot (стріляти)</div>
+        <div class="block" draggable="true" id="Block-Code-Start">Start (Почати)</div>
+        <div class="block" draggable="true" id="Block-Code-Variables">Variables (Змінна)</div>
+    </div>
+    <div id="code-area" ondrop="drop(event)" ondragover="allowDrop(event)">Drop blocks here</div>
+    <button onclick="executeCode()">Execute Code</button>
+    <script>
+        // Allow the drop event
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        // Handle the drag event
+        document.querySelectorAll('.block').forEach(block => {
+            block.addEventListener('dragstart', drag);
+        });
+
+        function drag(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        }
+
+        // Handle the drop event
+        function drop(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData("text");
+            const block = document.getElementById(data).cloneNode(true);
+            block.classList.add('dropped-block');
+            block.removeAttribute('draggable');
+            event.target.appendChild(block);
+        }
+
+        // Execute the code (simple example)
+        function executeCode() {
+            const codeArea = document.getElementById('code-area');
+            const blocks = codeArea.getElementsByClassName('dropped-block');
+            let codeSequence = [];
+            for (let block of blocks) {
+                codeSequence.push(block.id);
+            }
+            alert('Executing code sequence: ' + codeSequence.join(', '));
+            // Here you would parse and execute the blocks
+        }
+    </script>
+</body>
+</html>
