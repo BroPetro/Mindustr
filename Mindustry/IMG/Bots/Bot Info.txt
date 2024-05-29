@@ -1,0 +1,3 @@
+Bot-fly-NotSpeed-Atack -- Літає сильний не швидкий
+Bot-fly-Speed-notAtack --Бот літає швидкий не стріляє
+Bot-Ride-Speed-Atack -- Бот їздить швидкий і сильний
