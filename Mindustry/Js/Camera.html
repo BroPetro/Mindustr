@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Віртуальний джойстик</title>
+    <style>
+        #joystick-container {
+            width: 200px;
+            height: 200px;
+            background-color: lightgray;
+            border-radius: 50%;
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #joystick {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+        }
+        #movable {
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="joystick-container">
+        <div id="joystick"></div>
+    </div>
+    <div id="movable"></div>
+
+    <script>
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystick = document.getElementById('joystick');
+        const movable = document.getElementById('movable');
+        let isJoystickPressed = false;
+        let initialX, initialY;
+        let movableX = window.innerWidth / 2;
+        let movableY = window.innerHeight / 2;
+
+        joystick.addEventListener('mousedown', (e) => {
+            isJoystickPressed = true;
+            initialX = e.clientX;
+            initialY = e.clientY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isJoystickPressed) {
+                const rect = joystickContainer.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const dx = e.clientX - initialX;
+                const dy = e.clientY - initialY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = rect.width / 2 - joystick.offsetWidth / 2;
+
+                if (distance > maxDistance) {
+                    const angle = Math.atan2(dy, dx);
+                    joystick.style.left = centerX + maxDistance * Math.cos(angle) - joystick.offsetWidth / 2 + 'px';
+                    joystick.style.top = centerY + maxDistance * Math.sin(angle) - joystick.offsetHeight / 2 + 'px';
+                } else {
+                    joystick.style.left = e.clientX - joystick.offsetWidth / 2 + 'px';
+                    joystick.style.top = e.clientY - joystick.offsetHeight / 2 + 'px';
+                }
+
+                // Calculate the joystick position relative to its container
+                const relativeX = (parseFloat(joystick.style.left) + joystick.offsetWidth / 2 - centerX) / maxDistance;
+                const relativeY = (parseFloat(joystick.style.top) + joystick.offsetHeight / 2 - centerY) / maxDistance;
+
+                // Move the red div based on the joystick position
+                const moveSpeed = 1; // Adjust this value to change the movement speed
+                movableX += relativeX * moveSpeed;
+                movableY += relativeY * moveSpeed;
+                movable.style.left = movableX + 'px';
+                movable.style.top = movableY + 'px';
+
+                // Update initial positions
+                initialX = e.clientX;
+                initialY = e.clientY;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isJoystickPressed = false;
+            // Return the joystick to the center
+            joystick.style.left = '50%';
+            joystick.style.top = '50%';
+            joystick.style.transform = 'translate(-50%, -50%)';
+        });
+    </script>
+</body>
+</html>
