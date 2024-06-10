@@ -1,0 +1,5 @@
+3-2-1 -- Відлік часу
+Computer-sounds -- Звуки комп'ютера
+fly-Space ship -- політ косміного літака
+Landing-of-opponents -- висадка інопланетян
+Receiver-sounds -- звуки приймача

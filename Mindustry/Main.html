@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animated Menu</title>
+<style>
+  body {
+    background-color: black;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  #menu {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    opacity: 0;
+    animation: fadeIn 1s forwards;
+  }
+
+  #menu h1 {
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  .menu-button {
+    display: block;
+    margin: 10px 0;
+    padding: 10px 20px;
+    color: white;
+    background-color: #333;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+
+  .menu-button:hover {
+    background-color: #555;
+    transform: scale(1.1);
+  }
+
+  .menu-button:active {
+    background-color: #777;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="menu">
+  <h1>Game Menu</h1>
+  <button class="menu-button" onclick="navigateToPage('start')">Start Game</button>
+  <button class="menu-button" onclick="navigateToPage('save')">Save Game</button>
+  <button class="menu-button" onclick="navigateToPage('load')">Load Game</button>
+  <button class="menu-button" onclick="navigateToPage('exit')">Exit</button>
+</div>
+
+<script>
+function navigateToPage(action) {
+  const menu = document.getElementById('menu');
+  menu.style.animation = 'fadeOut 1s forwards';
+  setTimeout(() => {
+    if (action === 'start') {
+      window.location.href = 'Generation.html'; // Почати нову гру
+    } else if (action === 'save') {
+      window.location.href = 'save.html'; // збереження
+    } else if (action === 'load') {
+      window.location.href = 'load.html'; // загрузити з файлів
+    } else if (action === 'exit') {
+      window.location.href = 'exit.html'; // вийти
+    }
+  }, 1000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Grid with Mining</title>
+<style>
+body {
+  background-color: black;
+  overflow: hidden; /* Prevent scrolling */
+  margin: 0;
+  padding: 0;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#grid-container {
+  display: grid;
+  grid-template-columns: repeat(64, 1fr);
+  grid-template-rows: repeat(64, 1fr);
+  width: 4096px;
+  height: 4096px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cell {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #000;
+  background-size: cover;
+  background-position: center;
+  background-color: gray; /* Default background color */
+}
+
+#player {
+  width: 64px; /* Size of one cell */
+  height: 64px;
+  background-color: red;
+  position: absolute;
+  z-index: 1;
+}
+
+.radius-circle {
+  position: absolute;
+  width: 1280px; /* 20 blocks radius (10 blocks * 64px * 2) */
+  height: 1280px;
+  background-color: rgba(255, 0, 0, 0.3);
+  border-radius: 50%;
+  border: 2px solid red;
+  z-index: 2;
+  display: none;
+  pointer-events: none;
+}
+
+.laser {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, yellow, rgba(255, 255, 0, 0.5));
+  z-index: 3;
+  transform-origin: 0 0;
+  display: none;
+  animation: laser-fire 0.5s ease-out forwards;
+}
+
+@keyframes laser-fire {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--laser-length);
+  }
+}
+
+#block-count {
+  position: fixed;
+  top: 50px;
+  right: 10px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 15px;
+  border-radius: 5px;
+  z-index: 4;
+  font-family: Arial, sans-serif;
+}
+
+#block-count h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+</style>
+</head>
+<body>
+<div id="game-container">
+  <div id="grid-container">
+    <div id="player"></div>
+    <div id="radius-circle" class="radius-circle"></div>
+    <div id="laser" class="laser"></div>
+  </div>
+</div>
+<div id="block-count">
+  <h2>Mined Blocks</h2>
+  <p>Coal: <span id="coal-count">0</span></p>
+  <p>Gold: <span id="gold-count">0</span></p>
+  <p>Metal: <span id="metal-count">0</span></p>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const gridContainer = document.getElementById("grid-container");
+  const player = document.getElementById("player");
+  const radiusCircle = document.getElementById("radius-circle");
+  const laser = document.getElementById("laser");
+
+  // Array of image URLs
+  const images = [
+    'IMG/Maps/Block-Coal.png',
+    'IMG/Maps/Block-Gold.png',
+    'IMG/Maps/Block-metal.png',
+    'IMG/Maps/Block-null.png'
+  ];
+
+  const blockTypes = {
+    'IMG/Maps/Block-Coal.png': 'coal',
+    'IMG/Maps/Block-Gold.png': 'gold',
+    'IMG/Maps/Block-metal.png': 'metal'
+  };
+
+  const blockCounts = {
+    coal: 0,
+    gold: 0,
+    metal: 0
+  };
+
+  images.forEach((url, index) => {
+    const img = new Image();
+    img.src = url;
+    img.onerror = () => console.error(`Failed to load image at ${url}`);
+    img.onload = () => console.log(`Loaded image at ${url}`);
+  });
+
+  for (let i = 0; i < 64 * 64; i++) {
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+    const randomImageIndex = Math.floor(Math.random() * images.length);
+    cell.style.backgroundImage = `url(${images[randomImageIndex]})`;
+    cell.id = `cell-${i}`;  // Assign a unique ID to each cell
+    gridContainer.appendChild(cell);
+
+    cell.addEventListener('click', function() {
+      const cellX = i % 64;
+      const cellY = Math.floor(i / 64);
+      const distance = Math.sqrt((playerPosition.x - cellX) ** 2 + (playerPosition.y - cellY) ** 2);
+      if (distance <= 10 && cell.style.backgroundImage !== `url("IMG/Maps/Block-null.png")`) {
+        // Display the laser
+        const playerCenterX = playerPosition.x * 64 + 32;
+        const playerCenterY = playerPosition.y * 64 + 32;
+        const cellCenterX = cellX * 64 + 32;
+        const cellCenterY = cellY * 64 + 32;
+        const deltaX = cellCenterX - playerCenterX;
+        const deltaY = cellCenterY - playerCenterY;
+        const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+        const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        laser.style.setProperty('--laser-length', `${length}px`);
+        laser.style.transform = `rotate(${angle}deg)`;
+        laser.style.left = `${playerCenterX}px`;
+        laser.style.top = `${playerCenterY}px`;
+        laser.style.display = 'block';
+
+        // Hide the laser after the animation
+        setTimeout(() => {
+          laser.style.display = 'none';
+          const backgroundImage = cell.style.backgroundImage.slice(5, -2);
+          const blockType = blockTypes[backgroundImage];
+          if (blockType) {
+            blockCounts[blockType]++;
+            document.getElementById(`${blockType}-count`).textContent = blockCounts[blockType];
+          }
+          cell.style.backgroundImage = ''; // Mine the block by removing its background image
+        }, 500); // 0.5 seconds delay
+      }
+    });
+  }
+
+  let playerPosition = { x: 0, y: 0 };
+
+  function movePlayer(dx, dy) {
+    const newX = playerPosition.x + dx;
+    const newY = playerPosition.y + dy;
+    
+    if (newX >= 0 && newX < 64 && newY >= 0 && newY < 64) {
+      playerPosition.x = newX;
+      playerPosition.y = newY;
+      player.style.left = `${newX * 64}px`;
+      player.style.top = `${newY * 64}px`;
+      radiusCircle.style.left = `${(newX * 64) - 608}px`; // Center the circle (half of 1280px - half of 64px)
+      radiusCircle.style.top = `${(newY * 64) - 608}px`;
+      updateCamera();
+    }
+  }
+
+  function updateCamera() {
+    const gameContainer = document.getElementById("game-container");
+    const gameContainerRect = gameContainer.getBoundingClientRect();
+    const centerX = gameContainerRect.width / 2;
+    const centerY = gameContainerRect.height / 2;
+
+    const playerCenterX = playerPosition.x * 64 + 32;
+    const playerCenterY = playerPosition.y * 64 + 32;
+
+    gridContainer.style.left = `${centerX - playerCenterX}px`;
+    gridContainer.style.top = `${centerY - playerCenterY}px`;
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'w') movePlayer(0, -1);
+    if (event.key === 'a') movePlayer(-1, 0);
+    if (event.key === 's') movePlayer(0, 1);
+    if (event.key === 'd') movePlayer(1, 0);
+  });
+
+  gridContainer.addEventListener('click', (event) => {
+    const rect = gridContainer.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const cellX = Math.floor(x / 64);
+    const cellY = Math.floor(y / 64);
+    const distance = Math.sqrt((playerPosition.x - cellX) ** 2 + (playerPosition.y - cellY) ** 2);
+
+    if (distance > 10) {
+      radiusCircle.style.display = 'block';
+      setTimeout(() => {
+        radiusCircle.style.display = 'none';
+        alert('Ви вийшли за коло дії знищувача блоків');
+      }, 2000); // Show the circle for 2 seconds
+    }
+  });
+
+  // Initial camera update
+  updateCamera();
+});
+</script>
+</body>
+</html>
