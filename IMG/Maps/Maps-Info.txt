@@ -1,0 +1,6 @@
+Block-Coal -- Вугілля
+Block-Gold -- Золото
+Block-metal -- Метал
+Block-null -- Нічого
+Block-Water -- вода
+Block-Barrer -- Барєр
