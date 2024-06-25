@@ -1,5 +1,0 @@
-Block-Acamulator-Level-On -- простий акамул€торвбираЇ в себе 5000 другий р≥вень 10000
-Block-Electricy-Generator-ON-OR-OFF -- генерато на вуг≥лл≥ виробл€Ї в секунду 2500
-Block-Electricity-Health -- блок х≥лки ≥нших блок≥в ≥ маЇ рад≥ус 5 в ширину ≥ 5 в довжину
-Block-Electricity-line -- попускаЇ м≥ж собою 5000 а другий р≥вень 20000
-Block-Electricity-SolarPanels -- сон€чна панель виробл€Ї 1000 
